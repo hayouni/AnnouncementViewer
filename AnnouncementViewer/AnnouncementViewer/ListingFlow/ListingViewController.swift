@@ -7,14 +7,10 @@
 
 import UIKit
 
-protocol HomeCoordinatorDelegate: AnyObject {
-    func showDetail(item: listingEntity?)
-}
-
 class ListingViewController: UIViewController {
     
     var viewModel: ListingViewModelProtocol?
-    weak var delegate: HomeCoordinatorDelegate?
+
     
     struct K {
         static let filter: String = "Filtrer"
@@ -113,17 +109,18 @@ class ListingViewController: UIViewController {
     
     //setup tableView
     private func setupTableView() {
-        tableView.delegate = self
-        tableView.dataSource = self
         tableView.register(ListingTableViewCell.self, forCellReuseIdentifier: K.cellId )
         tableView.estimatedRowHeight = UITableView.automaticDimension
+        tableView.delegate = viewModel?.dataDelegate
+        tableView.dataSource = viewModel?.dataSource
+
     }
     
     // fetch list of items
     private func fetchData() {
         viewModel?.fetchData(completion: { [weak self] hasError in
             guard let self = self else { return }
-            hasError ? self.showAlert() :   self.tableView.reloadData()
+            hasError ? self.showAlert() : self.tableView.reloadData()
         })
     }
     
@@ -135,31 +132,5 @@ class ListingViewController: UIViewController {
         alert.addAction(UIAlertAction(title: K.cancelButton, style: UIAlertAction.Style.cancel, handler: nil))
         
         self.present(alert, animated: true, completion: nil)
-    }
-}
-
-// MARK: - UITableViewDelegate, UITableViewDataSource
-extension ListingViewController: UITableViewDelegate {
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let item = viewModel?.ListingeModel(at: indexPath)
-        delegate?.showDetail(item: item)
-    }
-    
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
-    }
-    
-}
-
-extension ListingViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel?.numberOfItems() ?? 0
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: K.cellId, for: indexPath) as! ListingTableViewCell
-        cell.listing = viewModel?.ListingeModel(at: indexPath)
-        return cell
     }
 }

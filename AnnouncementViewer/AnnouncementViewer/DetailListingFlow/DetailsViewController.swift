@@ -9,6 +9,14 @@ import UIKit
 
 class DetailsViewController: UIViewController {
     
+    struct K {
+        static let WebServicedateFormat: String = "yyyy-MM-dd'T'HH:mm:ssZ"
+        static let placeholder: String = "placeholder"
+        static let dateFormat: String = "yyyy/MM/dd"
+    }
+    
+    var viewModel: DetailsViewModelProtocol?
+
     // MARK: - private views
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -87,24 +95,17 @@ class DetailsViewController: UIViewController {
         imgView.image = UIImage(named: K.placeholder)
         return imgView
     }()
-    var viewModel: DetailsViewModelProtocol?
-    
-    struct K {
-        static let WebServicedateFormat: String = "yyyy-MM-dd'T'HH:mm:ssZ"
-        static let placeholder: String = "placeholder"
-        static let dateFormat: String = "yyyy/MM/dd"
-    }
     
     // MARK: -  function
     override func viewDidLoad() {
         super.viewDidLoad()
         addSubview()
-        configureView()
+        setupView()
     }
     
     // MARK: - private function
     // configure custom view
-    private func configureView() {
+    private func setupView() {
         
         if let date = viewModel?.date {
             let dateFormatter = DateFormatter()
@@ -112,8 +113,9 @@ class DetailsViewController: UIViewController {
             let date = dateFormatter.date(from: date)
             dateLabel.text = date?.toString(format: K.dateFormat)
         }
-        
-        image.load(url: (viewModel?.image)!)
+        if let url = viewModel?.image {
+            image.load(url: url)
+        }
         
         if let name = viewModel?.name {
             nameLabel.text = name
@@ -138,6 +140,7 @@ class DetailsViewController: UIViewController {
         addContentView()
         addStackView()
     }
+    
     // add ScrollView
     private func addScrollView() {
         view.backgroundColor = .systemBackground
@@ -150,6 +153,7 @@ class DetailsViewController: UIViewController {
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
+    
     // add ContentView
     private func addContentView() {
         scrollView.addSubview(contentView)
@@ -165,8 +169,8 @@ class DetailsViewController: UIViewController {
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             contentViewHeightConstraint
         ])
-        
     }
+
     // add stackView
     private func addStackView() {
         let stackView = UIStackView(arrangedSubviews: [dateLabel, image, categoryLabel, nameLabel, descriptionLabel, priceLabel])

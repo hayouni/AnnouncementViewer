@@ -14,10 +14,12 @@ public struct Categories: Decodable {
 }
 
 private extension Categories {
+    
     private enum CodingKeys: String, CodingKey {
         case id
         case name
     }
+    
 }
 
 public extension Categories {

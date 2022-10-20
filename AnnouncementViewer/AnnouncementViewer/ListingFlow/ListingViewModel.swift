@@ -6,8 +6,16 @@
 //
 
 import Foundation
+
+protocol ListingsCoordinatorDelegate: AnyObject {
+    func showDetail(item: listingEntity?)
+}
+
 protocol ListingViewModelProtocol {
     var categories: [Categories]? { get }
+    var searchedItems: listingEntities? { get }
+    var dataDelegate: ListingsDataDelegate? { get }
+    var dataSource: ListingsDataSource? { get }
     func numberOfItems() -> Int
     func ListingeModel(at index: IndexPath) -> listingEntity?
     func fetchData(completion: @escaping (Bool) -> ())
@@ -20,12 +28,19 @@ class ListingViewModel: ListingViewModelProtocol {
     // list of  listings
     var categories: [Categories]?
     private var items: listingEntities?
-    internal var searchedItems: listingEntities?
-    internal var service: ServiceProtocol?
-    
+    var searchedItems: listingEntities?
+    var dataDelegate: ListingsDataDelegate?
+    var dataSource: ListingsDataSource?
+    var service: ServiceProtocol?
+    weak var delegate: ListingsCoordinatorDelegate?
+
     // MARK: - public function
-    init (service: ServiceProtocol) {
+    init (service: ServiceProtocol, delegate: ListingsCoordinatorDelegate?) {
         self.service = service
+        self.delegate = delegate
+        dataDelegate =  ListingsDataDelegate(delegate: self)
+        dataSource =  ListingsDataSource()
+
     }
     
     /// get number ofItems
@@ -56,6 +71,7 @@ class ListingViewModel: ListingViewModelProtocol {
             self.categories = listingsData.categories
             self.items = self.sortItem(items: listingsData.listing)
             self.searchedItems = self.sortItem(items: listingsData.listing)
+            self.dataSource?.items = self.searchedItems
             completion(false)
         })
     }
@@ -64,21 +80,20 @@ class ListingViewModel: ListingViewModelProtocol {
     /// - Parameter items: listingEntities
     /// - Returns: sorted listingEntities
     func sortItem(items: listingEntities) -> listingEntities {
+        return sort(items:items, isUrgent: true) + sort(items:items, isUrgent: false)
+    }
+    
+    private func sort(items: listingEntities, isUrgent: Bool) -> listingEntities {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        
-        
-        let sortedUrgentItems = items.filter { $0.isUrgent == true }
+        return items.filter { $0.isUrgent == isUrgent }
             .sorted {
-                dateFormatter.date(from: $0.date!)! > dateFormatter.date(from: $1.date!)!
+                guard let firstDate = $0.date,
+                      let secondDate =  $1.date,
+                      let firstFormattedDate = dateFormatter.date(from: firstDate),
+                      let secondFormattedDate = dateFormatter.date(from: secondDate) else { return false }
+                return firstFormattedDate > secondFormattedDate
             }
-        
-        let sortedNonUrgentItems = items.filter { $0.isUrgent == false }
-            .sorted {
-                dateFormatter.date(from: $0.date!)! > dateFormatter.date(from: $1.date!)!
-            }
-        
-        return sortedUrgentItems + sortedNonUrgentItems
     }
     
     /// filter the items by category
@@ -92,7 +107,15 @@ class ListingViewModel: ListingViewModelProtocol {
             return
         }
         searchedItems = items?.filter { $0.category?.id ?? 0 == caretory?.id }
+        dataSource?.items = self.searchedItems
         completion()
     }
     
+}
+
+extension ListingViewModel: DataDelegateActionProtocol {
+    func showDetail(_ index: IndexPath) {
+        let item = ListingeModel(at: index)
+        delegate?.showDetail(item: item)
+    }
 }

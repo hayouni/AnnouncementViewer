@@ -20,30 +20,6 @@ extension UIImageView {
     }
 }
 
-extension Listing {
-    func asEntity(categories: [Categories]) -> listingEntity {
-        var url: URL?
-        if let imageString = image?.small {
-            url = URL(string: imageString)
-        }
-        let categorie = categories.first(where: { $0.id == categoryId ?? 0})
-        
-        return listingEntity(image: url,
-                             name: title,
-                             date: date,
-                             description: description,
-                             price: price,
-                             isUrgent: isUrgent,
-                             category: categorie)
-    }
-}
-
-extension Listings {
-    func asEntities(categories: [Categories]) -> listingEntities {
-        self.map { $0.asEntity(categories: categories) }
-    }
-}
-
 extension UIView {
     
     func anchor (top: NSLayoutYAxisAnchor? = nil,

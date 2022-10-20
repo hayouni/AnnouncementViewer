@@ -22,7 +22,7 @@ class DetailsViewModel: DetailsViewModelProtocol {
     
     // MARK: - internal properties
     // list of listings
-    internal var item: listingEntity?
+    var item: listingEntity?
     
     init (item: listingEntity?) {
         self.item = item
